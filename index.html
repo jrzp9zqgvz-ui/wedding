@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>防止备婚崩溃系统</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./plan-styles.css" />
+    <link rel="stylesheet" href="./modules-styles.css" />
+    <script src="./api-integration.js" defer></script>
+  </head>
+  <body>
+    <div id="splash-screen" class="splash-screen" aria-label="婚礼准备系统开屏">
+      <div class="splash-border">
+        <p class="splash-kicker">囍</p>
+        <h2>赵尉辰&amp;张熙苓</h2>
+        <p class="splash-title">婚礼准备系统</p>
+        <p class="splash-subtitle">良辰吉日 · 万事有序</p>
+      </div>
+    </div>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Wedding Control Desk</p>
+          <h1>防止备婚崩溃系统</h1>
+        </div>
+        <div class="date-pill">
+          <span id="wedding-date-label">2026.09.26</span>
+          <button id="edit-date-btn" aria-label="修改婚礼日期" title="修改婚礼日期">✎</button>
+        </div>
+      </header>
+
+      <section class="hero-grid" aria-label="总览">
+        <article class="hero-panel countdown-panel">
+          <p class="panel-label">距离婚礼还有</p>
+          <div class="countdown"><span id="days-left">128</span><small>天</small></div>
+          <p id="urgent-line" class="muted">今天先处理最紧急的 3 件事。</p>
+        </article>
+        <article class="hero-panel">
+          <p class="panel-label">当前进度</p>
+          <div class="meter-row">
+            <strong id="progress-percent">0%</strong>
+            <span id="progress-count" class="muted">0/0</span>
+          </div>
+          <div class="progress-track"><span id="progress-bar"></span></div>
+        </article>
+        <article class="hero-panel">
+          <p class="panel-label">预算</p>
+          <div class="budget-line">
+            <strong id="spent-total">¥0</strong>
+            <span>/</span>
+            <button id="budget-btn" class="inline-edit" title="修改总预算">¥180000</button>
+          </div>
+          <p id="budget-alert" class="muted">预算状态稳定。</p>
+        </article>
+      </section>
+
+      <section class="now-strip" aria-label="下一步推荐">
+        <div>
+          <p class="panel-label">AI 智能待办</p>
+          <h2>下一步推荐</h2>
+        </div>
+        <div id="recommendations" class="recommendations"></div>
+      </section>
+
+      <section class="workspace">
+        <nav class="sidebar" aria-label="模块">
+          <button class="nav-item active" data-view="dashboard">⌂<span>总控台</span></button>
+          <button class="nav-item" data-view="vendors">□<span>商家</span></button>
+          <button class="nav-item" data-view="budget">¥<span>预算</span></button>
+          <button class="nav-item" data-view="guests">◎<span>宾客</span></button>
+          <button class="nav-item" data-view="inspiration">◇<span>灵感墙</span></button>
+          <button class="nav-item" data-view="couple">♡<span>新人</span></button>
+          <button class="nav-item" data-view="timeline">↕<span>流程</span></button>
+        </nav>
+
+        <section class="content">
+          <div class="view active" id="view-dashboard">
+            <!-- 从数据库加载的计划列表 -->
+            <div class="api-plans-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Database Plans</p>
+                  <h3>💾 共享计划库</h3>
+                </div>
+                <button class="primary-btn" id="open-plan-form-btn">+ 添加计划</button>
+              </div>
+              <div id="plans-list" class="task-list"></div>
+            </div>
+          </div>
+
+          <div class="view" id="view-vendors" data-section="vendors">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Vendors</p>
+                <h2>酒店 / 四大金刚 / 婚庆</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加商家</button>
+            </div>
+            <div class="vendor-tools" id="vendor-filters">
+              <button data-vendor-type="all" class="filter-btn active">全部</button>
+              <button data-vendor-type="酒店" class="filter-btn">🏨 酒店</button>
+              <button data-vendor-type="司仪" class="filter-btn">🎤 司仪</button>
+              <button data-vendor-type="化妆" class="filter-btn">💄 化妆</button>
+              <button data-vendor-type="摄影" class="filter-btn">📸 摄影</button>
+              <button data-vendor-type="摄像" class="filter-btn">🎥 摄像</button>
+              <button data-vendor-type="婚庆" class="filter-btn">💐 婚庆</button>
+              <button data-vendor-type="接亲车队" class="filter-btn">🚗 车队</button>
+            </div>
+            <div id="vendors-list" class="vendor-list"></div>
+          </div>
+
+          <div class="view" id="view-budget" data-section="expenses">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Budget</p>
+                <h2>报价统一管理</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加支出</button>
+            </div>
+            <div class="budget-tools" style="margin-bottom: 1rem;">
+              <button data-expense-status="all" class="filter-btn active">全部</button>
+              <button data-expense-status="paid" class="filter-btn">✓ 已支付</button>
+              <button data-expense-status="unpaid" class="filter-btn">✗ 未支付</button>
+            </div>
+            <div id="expenses-list" class="expense-list"></div>
+          </div>
+
+          <div class="view" id="view-guests" data-section="guests">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Guests</p>
+                <h2>宾客名单和桌数</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加宾客</button>
+            </div>
+            <div class="guest-tools" style="margin-bottom: 1rem;">
+              <button data-guest-status="all" class="filter-btn active">全部</button>
+              <button data-guest-status="attending" class="filter-btn">✓ 确认出席</button>
+              <button data-guest-status="not-attending" class="filter-btn">✗ 未确认</button>
+            </div>
+            <div id="guests-list" class="guest-list"></div>
+          </div>
+
+          <div class="view" id="view-inspiration" data-section="inspirations">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Moodboard</p>
+                <h2>截图不要再失踪</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加灵感</button>
+            </div>
+            <div id="inspirations-list" class="inspo-wall"></div>
+          </div>
+
+          <div class="view" id="view-couple" data-section="profiles">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Couple</p>
+                <h2>新郎新娘个人管理</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加档案</button>
+            </div>
+            <div id="profiles-list" class="couple-grid"></div>
+          </div>
+
+          <div class="view" id="view-timeline" data-section="timeline">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Flow</p>
+                <h2>婚礼流程顺序</h2>
+              </div>
+              <button class="primary-btn add-btn">+ 添加流程</button>
+            </div>
+            <div id="timeline-list" class="flow-list"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="quick-dialog">
+      <form method="dialog" id="quick-form">
+        <h3 id="dialog-title">新增</h3>
+        <div id="dialog-fields"></div>
+        <menu>
+          <button value="cancel" class="ghost-btn">取消</button>
+          <button value="default" class="primary-btn">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 添加计划的表单对话框 -->
+    <dialog id="plan-dialog">
+      <form method="dialog" id="plan-form">
+        <h3>添加新计划</h3>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <input type="text" id="plan-title" placeholder="计划标题 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea id="plan-description" placeholder="描述（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-height: 80px;"></textarea>
+          <select id="plan-category" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">选择分类（可选）</option>
+            <option value="酒店">🏨 酒店</option>
+            <option value="婚庆">💐 婚庆</option>
+            <option value="摄影">📸 摄影</option>
+            <option value="摄像">🎥 摄像</option>
+            <option value="化妆">💄 化妆</option>
+            <option value="司仪">🎤 司仪</option>
+            <option value="其他">📝 其他</option>
+          </select>
+          <input type="date" id="plan-start-date" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="date" id="plan-end-date" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button type="button" value="cancel" class="ghost-btn">取消</button>
+          <button type="button" value="save" class="primary-btn">保存计划</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+    <script src="./plan-ui.js"></script>
+    <script src="./vendors-ui.js"></script>
+    <script src="./expenses-ui.js"></script>
+    <script src="./guests-ui.js"></script>
+    <script src="./inspirations-ui.js"></script>
+    <script src="./profiles-ui.js"></script>
+    <script src="./timeline-ui.js"></script>
+
+    <!-- 商家对话框 -->
+    <dialog id="vendor-dialog">
+      <form method="dialog" id="vendor-form">
+        <h3>添加新商家</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 70vh; overflow-y: auto;">
+          <select name="type" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">选择分类 *</option>
+            <option value="酒店">酒店</option>
+            <option value="司仪">司仪</option>
+            <option value="化妆">化妆</option>
+            <option value="摄影">摄影</option>
+            <option value="摄像">摄像</option>
+            <option value="婚庆">婚庆</option>
+            <option value="接亲车队">接亲车队</option>
+          </select>
+          <input type="text" name="name" placeholder="商家名称 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="style" placeholder="风格特色（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="contact" placeholder="联系方式（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="wechat" placeholder="微信号（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="number" name="quote" placeholder="报价（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="number" name="deposit" placeholder="定金（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="number" name="final" placeholder="尾款（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea name="package" placeholder="套餐内容（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="outfit" placeholder="服装安排（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="schedule" placeholder="进度备注（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="note" placeholder="其他备注（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('vendor-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('vendor-form').dispatchEvent(new Event('submit')); return false;">保存商家</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 预算对话框 -->
+    <dialog id="expense-dialog">
+      <form method="dialog" id="expense-form">
+        <h3>添加新支出</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <select name="category" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">选择分类 *</option>
+            <option value="酒店">酒店</option>
+            <option value="婚庆">婚庆</option>
+            <option value="摄影">摄影</option>
+            <option value="摄像">摄像</option>
+            <option value="化妆">化妆</option>
+            <option value="司仪">司仪</option>
+            <option value="接亲车队">接亲车队</option>
+            <option value="礼服">礼服</option>
+            <option value="其他">其他</option>
+          </select>
+          <input type="text" name="item" placeholder="项目名称 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="number" name="amount" placeholder="金额 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('expense-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('expense-form').dispatchEvent(new Event('submit')); return false;">保存支出</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 宾客对话框 -->
+    <dialog id="guest-dialog">
+      <form method="dialog" id="guest-form">
+        <h3>添加新宾客</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <input type="text" name="name" placeholder="宾客名字 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="side" placeholder="关系来源（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="number" name="count" placeholder="人数（默认1）" min="1" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="tel" name="phone" placeholder="联系电话（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea name="remark" placeholder="备注（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('guest-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('guest-form').dispatchEvent(new Event('submit')); return false;">保存宾客</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 灵感对话框 -->
+    <dialog id="inspiration-dialog">
+      <form method="dialog" id="inspiration-form">
+        <h3>添加新灵感</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <input type="text" name="title" placeholder="灵感标题 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="tag" placeholder="标签（如：现场、花艺等）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea name="note" placeholder="描述说明（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <input type="text" name="palette" placeholder="调色板名称（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="colors" placeholder="颜色代码（用、分隔，如：#f7f4ec、#dbe7dc）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="keywords" placeholder="关键词（用、分隔）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('inspiration-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('inspiration-form').dispatchEvent(new Event('submit')); return false;">保存灵感</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 新人档案对话框 -->
+    <dialog id="profile-dialog">
+      <form method="dialog" id="profile-form">
+        <h3>添加新档案</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <input type="text" name="person" placeholder="人物（如：新娘、新郎）*" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <input type="text" name="weight" placeholder="体重（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea name="outfit" placeholder="礼服安排（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="makeup" placeholder="化妆要求（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="fitting" placeholder="试装进度（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="grooming" placeholder="仪容整理清单（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <textarea name="note" placeholder="其他备注（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('profile-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('profile-form').dispatchEvent(new Event('submit')); return false;">保存档案</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- 流程对话框 -->
+    <dialog id="timeline-dialog">
+      <form method="dialog" id="timeline-form">
+        <h3>添加新流程</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <input type="text" name="title" placeholder="流程标题 *" required style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+          <textarea name="detail" placeholder="详细内容（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+          <input type="time" name="time" placeholder="时间（可选）" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>
+        <menu style="margin-top: 1.5rem;">
+          <button class="ghost-btn" onclick="document.getElementById('timeline-dialog').close();">取消</button>
+          <button class="primary-btn" onclick="document.getElementById('timeline-form').dispatchEvent(new Event('submit')); return false;">保存流程</button>
+        </menu>
+      </form>
+    </dialog>
+  </body>
+</html>
